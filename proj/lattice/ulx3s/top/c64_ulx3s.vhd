@@ -30,15 +30,15 @@ use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.ALL;
 use IEEE.numeric_std.all;
 
-entity c64_de2 is
+library ecp5u;
+use ecp5u.components.all;
+
+entity c64_ulx3s is
 port(
 	clock_50  : in std_logic;
---	clock_27  : in std_logic;
---	ext_clock : in std_logic;
---	ledr       : out std_logic_vector(17 downto 0);
-	ledg       : out std_logic_vector(8 downto 0);
-	key       : in std_logic_vector(3 downto 0);
-	sw        : in std_logic_vector(17 downto 0);
+	led       : out std_logic_vector(7 downto 0);
+	btn       : in std_logic_vector(6 downto 0);
+	sw        : in std_logic_vector(3 downto 0);
 
 --	dram_ba_0 : out std_logic;
 --	dram_ba_1 : out std_logic;
@@ -121,44 +121,88 @@ port(
 
 	i2c_sclk : out std_logic;
 	i2c_sdat : inout std_logic;
-	
---	td_clk27 : in std_logic;
---	td_reset : out std_logic;
---	td_data : in std_logic_vector(7 downto 0);
---	td_hs : in std_logic;
---	td_vs : in std_logic;
 
-	aud_adclrck : out std_logic;
-	aud_adcdat  : in std_logic;
-	aud_daclrck : out std_logic;
-	aud_dacdat  : out std_logic;
-	aud_xck     : out std_logic;
-	aud_bclk    : out std_logic;
-	
---	enet_data : inout std_logic_vector(15 downto 0);
---	enet_clk : out std_logic;
---	enet_cmd : out std_logic;
---	enet_cs_n : out std_logic;
---	enet_int : in std_logic;
---	enet_rd_n : out std_logic;
---	enet_wr_n : out std_logic;
---	enet_rst_n : out std_logic;
---	
---	irda_txd : out std_logic;
---	irda_rxd : in std_logic;
---	
-	sd_dat  : inout std_logic;
-	sd_dat3 : out std_logic;
-	sd_cmd  : out std_logic;
-	sd_clk  : out std_logic;
-	
+	sd_dat0_do  : inout std_logic;
+	sd_dat3_csn : out std_logic;
+	sd_cmd_di  : out std_logic;
+	sd_clk  : out std_logic
 
-	gpio_0    : inout std_logic_vector(35 downto 0);
-	gpio_1    : inout std_logic_vector(35 downto 0)
+
+  clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
+
+  -- UART0 (FTDI USB slave serial)
+  ftdi_rxd: out   std_logic;
+  ftdi_txd: in    std_logic;
+  -- FTDI additional signaling
+  ftdi_ndsr: inout  std_logic;
+  ftdi_nrts: inout  std_logic;
+  ftdi_txden: inout std_logic;
+
+  -- UART1 (WiFi serial)
+  wifi_rxd: out   std_logic;
+  wifi_txd: in    std_logic;
+  -- WiFi additional signaling
+  wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
+  wifi_gpio0, wifi_gpio2, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
+
+  -- ADC MAX11123
+  adc_csn, adc_sclk, adc_mosi: out std_logic;
+  adc_miso: in std_logic;
+
+  -- SDRAM
+  sdram_clk: out std_logic;
+  sdram_cke: out std_logic;
+  sdram_csn: out std_logic;
+  sdram_rasn: out std_logic;
+  sdram_casn: out std_logic;
+  sdram_wen: out std_logic;
+  sdram_a: out std_logic_vector (12 downto 0);
+  sdram_ba: out std_logic_vector(1 downto 0);
+  sdram_dqm: out std_logic_vector(1 downto 0);
+  sdram_d: inout std_logic_vector (15 downto 0);
+
+  -- Onboard blinky
+  led: out std_logic_vector(7 downto 0);
+  btn: in std_logic_vector(6 downto 0);
+  sw: in std_logic_vector(3 downto 0);
+  oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
+
+  -- GPIO
+  gp, gn: inout std_logic_vector(27 downto 0);
+
+  -- SHUTDOWN: logic '1' here will shutdown power on PCB >= v1.7.5
+  shutdown: out std_logic := '0';
+
+  -- Audio jack 3.5mm
+  audio_l, audio_r, audio_v: inout std_logic_vector(3 downto 0) := (others => 'Z');
+
+  -- Onboard antenna 433 MHz
+  ant_433mhz: out std_logic;
+
+  -- Digital Video (differential outputs)
+  gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
+  gpdi_clkp, gpdi_clkn: out std_logic;
+
+  -- i2c shared for digital video and RTC
+  gpdi_scl, gpdi_sda: inout std_logic;
+
+  -- Flash ROM (SPI0)
+  -- commented out because it can't be used as GPIO
+  -- when bitstream is loaded from config flash
+  --flash_miso   : in      std_logic;
+  --flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic;
+  --flash_csn    : out     std_logic;
+
+  -- SD card (SPI1)
+  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
+  sd_clk: out std_logic;
+  sd_cdn, sd_wp: in std_logic
+	
 );
-end c64_de2;
+end c64_ulx3s;
 
-architecture struct of c64_de2 is
+architecture struct of c64_ulx3s is
 
 	signal c64_iec_atn_i  : std_logic;
 	signal c64_iec_clk_o  : std_logic;
@@ -232,12 +276,10 @@ architecture struct of c64_de2 is
 	signal led_disk         : std_logic_vector(7 downto 0);
 
 begin
+	wifi_gpio0 <= '0'; -- setting to 1 will activate ESP32 loader
 
 	tv15Khz_mode <= sw(0);
 	ntsc_init_mode <= sw(1);
-
-	gpio_1(31 downto 3) <= (others => 'Z');
-	gpio_1(1) <= 'Z';
 
 	clk_32_18 : entity work.pll50_to_32_and_18
 	port map(
@@ -246,11 +288,11 @@ begin
 		c1 => clk18
 	);
 	
-	process(clk32, key(0))
+	process(clk32, btn(0))
 	begin
 		if rising_edge(clk32) then
 			reset_n <= '0';
-			if key(0)='0' then
+			if btn(0)='0' then
 				reset_counter <= (others => '0');
 			else
 			  if reset_counter = X"FF" then
@@ -264,7 +306,7 @@ begin
 
 	fpga64 : entity work.fpga64_sid_iec
 	port map(
-		sysclk => clock_50,
+		sysclk => clk50,
 		clk32 => clk32,
 		reset_n => reset_n,
 		kbd_clk => ps2_clk,
@@ -302,14 +344,13 @@ begin
 		iec_clk_i  => not c64_iec_clk_i,
 		iec_atn_i  => not c64_iec_atn_i,
 		disk_num => disk_num,
-	  dbg_num => dbg_num
-
+		dbg_num => dbg_num
 	);
 
 	-- 
-	c64_iec_atn_i  <= not ((not c64_iec_atn_o)  and (not c1541_iec_atn_o) ) or (ext_iec_atn_i  and sw(5));
-  	c64_iec_data_i <= not ((not c64_iec_data_o) and (not c1541_iec_data_o)) or (ext_iec_data_i and sw(5));
-	c64_iec_clk_i  <= not ((not c64_iec_clk_o)  and (not c1541_iec_clk_o) ) or (ext_iec_clk_i  and sw(5));
+	c64_iec_atn_i  <= not ((not c64_iec_atn_o)  and (not c1541_iec_atn_o) ) or (ext_iec_atn_i  and mode_iec);
+  	c64_iec_data_i <= not ((not c64_iec_data_o) and (not c1541_iec_data_o)) or (ext_iec_data_i and mode_iec);
+	c64_iec_clk_i  <= not ((not c64_iec_clk_o)  and (not c1541_iec_clk_o) ) or (ext_iec_clk_i  and mode_iec);
 	
 	c1541_iec_atn_i  <= c64_iec_atn_i;
 	c1541_iec_data_i <= c64_iec_data_i;
@@ -326,7 +367,7 @@ begin
 	clk18 => clk18,
 	reset => not reset_n,
 	
-	disk_num => (sw(17 downto 16) & disk_num),
+	disk_num => ("00" & disk_num),
 
 	iec_atn_i  => c1541_iec_atn_i,
 	iec_data_i => c1541_iec_data_i,
@@ -335,22 +376,22 @@ begin
 	iec_atn_o  => c1541_iec_atn_o,
 	iec_data_o => c1541_iec_data_o,
 	iec_clk_o  => c1541_iec_clk_o,
-	
-	sd_dat  => sd_dat,
-	sd_dat3 => sd_dat3,
-	sd_cmd  => sd_cmd,
+
+	sd_dat  => sd_dat0_do,
+	sd_dat3 => sd_dat3_csn,
+	sd_cmd  => sd_cmd_di,
 	sd_clk  => sd_clk,
 
-  dbg_adr_fetch   => dbg_adr_fetch,
-  dbg_cpu_irq     => dbg_cpu_irq,
+	dbg_adr_fetch   => dbg_adr_fetch,
+  	dbg_cpu_irq     => dbg_cpu_irq,
 	dbg_track_dbl   => dbg_track_dbl,
 	dbg_sync_n      => dbg_sync_n,
 	dbg_byte_n      => dbg_byte_n,
 	dbg_sd_busy     => dbg_sd_busy,
 	dbg_sd_state    => dbg_sd_state,
-  dbg_read_sector => dbg_read_sector, 
+	dbg_read_sector => dbg_read_sector, 
 	
-  led => led_disk
+  	led => led_disk
 	);
 	
 	--sram addr(17 downto 16) <= (others => '0');
@@ -376,13 +417,13 @@ begin
 	  data_out_a => ram_out
 	); 
 
-	vga_clk <= clk32;
-	vga_sync <=  '0';
-	vga_blank <= '1';
+	--vga_clk <= clk32;
+	--vga_sync <=  '0';
+	--vga_blank <= '1';
 
-	vga_r <= std_logic_vector(r(7 downto 0)) & "00";
-	vga_g <= std_logic_vector(g(7 downto 0)) & "00";
-	vga_b <= std_logic_vector(b(7 downto 0)) & "00";
+	--vga_r <= std_logic_vector(r(7 downto 0)) & "00";
+	--vga_g <= std_logic_vector(g(7 downto 0)) & "00";
+	--vga_b <= std_logic_vector(b(7 downto 0)) & "00";
 
 	comp_sync : entity work.composite_sync
 	port map(
@@ -398,18 +439,6 @@ begin
 	vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
 
 	sound_string <= audio_data(17 downto 2) & audio_data(17 downto 2);
-
-	--wm8731_dac : entity work.wm8731_dac
-	--port map(
-	--	clk18MHz => clk18,
-	--	sampledata => sound_string,
-	--	i2c_sclk => i2c_sclk,
-	--	i2c_sdat => i2c_sdat,
-	--	aud_bclk => aud_bclk,
-	--	aud_daclrck => aud_daclrck,
-	--	aud_dacdat => aud_dacdat,
-	--	aud_xck => aud_xck
-	--); 
 
 	with dbg_num select
 	led(7 downto 0) <= disk_num when "000",

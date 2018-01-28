@@ -9,79 +9,112 @@
         <Source name="constraints/ulx3s_v18.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
-        <Source name="clocks/clk_25_100_125_25.vhd" type="VHDL" type_short="VHDL">
+        <Source name="clocks/clk_25M_50M.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/gen_ram.vhd" type="VHDL" type_short="VHDL">
+        <Source name="clocks/clk_25M_158M33_31M66_17M99.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/io_ps2_keyboard.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_emard/fpga64_buslogic_sid_iec.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/kbd_joystick.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/gcr_floppy.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/phoenix_effect1.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/c1541_sd.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/phoenix_effect2.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/composite_sync.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/phoenix_effect3.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/spi_controller.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/phoenix_music.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_emard/c1541_logic.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/phoenix_video.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/video_vicII_656x_a.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/wm8731_dac.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/fpga64_buslogic_roms_mmu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80_ALU.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/fpga64_keyboard_matrix_mark_mcdougall.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80_MCode.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_dar/sid6581.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80_Pack.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_pace/m6522.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80_Reg.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_pace/sid_voice.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_pace/sprom.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T80s.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_pace/spram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T8080se.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../t65/T65_Pack.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_T80/T16450.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../t65/T65_MCode.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/phoenix_prog.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../t65/T65_ALU.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_ic23.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../t65/T65.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_ic24.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../FPGA64_027/sources/rtl/roms/rom_c64_kernal.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_ic39.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../FPGA64_027/sources/rtl/roms/rom_c64_chargen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_ic40.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../FPGA64_027/sources/rtl/roms/rom_c64_basic.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_palette_ic40.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../FPGA64_027/sources/rtl/video_vicII_656x_e.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../tools/phoenix_unzip/roms/prom_palette_ic41.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../FPGA64_027/sources/rtl/io_ps2_keyboard.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/gen_rwram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/gen_ram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/fpga64_rgbcolor.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/fpga64_hexy_vmode.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/fpga64_hexy.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../rtl_emard/fpga64_cone_scanconverter.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/fpga64_bustiming.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/cpu65xx_fast.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/cpu65xx_e.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/cpu_6510.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/cia6526.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../rtl_emard/osd/osd.vhd" type="VHDL" type_short="VHDL">
@@ -90,10 +123,7 @@
         <Source name="../../../rtl_emard/osd/char_rom.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_emard/vga/phoenix.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../rtl_emard/vga/phoenix_video_vga.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_emard/generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../rtl_emard/vga/vga.vhd" type="VHDL" type_short="VHDL">

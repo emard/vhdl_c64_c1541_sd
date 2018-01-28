@@ -35,99 +35,6 @@ use ecp5u.components.all;
 
 entity c64_ulx3s is
 port(
-	clock_50  : in std_logic;
-	led       : out std_logic_vector(7 downto 0);
-	btn       : in std_logic_vector(6 downto 0);
-	sw        : in std_logic_vector(3 downto 0);
-
---	dram_ba_0 : out std_logic;
---	dram_ba_1 : out std_logic;
---	dram_ldqm : out std_logic;
---	dram_udqm : out std_logic;
---	dram_ras_n : out std_logic;
---	dram_cas_n : out std_logic;
---	dram_cke : out std_logic;
---	dram_clk : out std_logic;
---	dram_we_n : out std_logic;
---	dram_cs_n : out std_logic;
---	dram_dq : inout std_logic_vector(15 downto 0);
---	dram_addr : out std_logic_vector(11 downto 0);
---
---	fl_addr  : out std_logic_vector(21 downto 0);
---	fl_ce_n  : out std_logic;
---	fl_oe_n  : out std_logic;
---	fl_dq    : inout std_logic_vector(7 downto 0);
---	fl_rst_n : out std_logic;
---	fl_we_n  : out std_logic;
---
-	hex0 : out std_logic_vector(6 downto 0);
-	hex1 : out std_logic_vector(6 downto 0);
-	hex2 : out std_logic_vector(6 downto 0);
-	hex3 : out std_logic_vector(6 downto 0);
-	hex4 : out std_logic_vector(6 downto 0);
-	hex5 : out std_logic_vector(6 downto 0);
-	hex6 : out std_logic_vector(6 downto 0);
-	hex7 : out std_logic_vector(6 downto 0);
-
-	ps2_clk : in std_logic;
-	ps2_dat : inout std_logic;
-
---	uart_txd : out std_logic;
---	uart_rxd : in std_logic;
---
---	lcd_rw   : out std_logic;
---	lcd_en   : out std_logic;
---	lcd_rs   : out std_logic;
---	lcd_data : out std_logic_vector(7 downto 0);
---	lcd_on   : out std_logic;
---	lcd_blon : out std_logic;
-	
-	sram_addr : out std_logic_vector(17 downto 0);
-	sram_dq   : inout std_logic_vector(15 downto 0);
-	sram_we_n : out std_logic;
-	sram_oe_n : out std_logic;
-	sram_ub_n : out std_logic;
-	sram_lb_n : out std_logic;
-	sram_ce_n : out std_logic;
-	
---	otg_addr   : out std_logic_vector(1 downto 0);
---	otg_cs_n   : out std_logic;
---	otg_rd_n   : out std_logic;
---	otg_wr_n   : out std_logic;
---	otg_rst_n  : out std_logic;
---	otg_data   : inout std_logic_vector(15 downto 0);
---	otg_int0   : in std_logic;
---	otg_int1   : in std_logic;
---	otg_dack0_n: out std_logic;
---	otg_dack1_n: out std_logic;
---	otg_dreq0  : in std_logic;
---	otg_dreq1  : in std_logic;
---	otg_fspeed : inout std_logic;
---	otg_lspeed : inout std_logic;
---	
---	tdi : in std_logic;
---	tcs : in std_logic;
---	tck : in std_logic;
---	tdo : out std_logic;
-	
-	vga_r     : out std_logic_vector(9 downto 0);
-	vga_g     : out std_logic_vector(9 downto 0);
-	vga_b     : out std_logic_vector(9 downto 0);
-	vga_clk   : out std_logic;
-	vga_blank : out std_logic;
-	vga_hs    : out std_logic;
-	vga_vs    : out std_logic;
-	vga_sync  : out std_logic;
-
-	i2c_sclk : out std_logic;
-	i2c_sdat : inout std_logic;
-
-	sd_dat0_do  : inout std_logic;
-	sd_dat3_csn : out std_logic;
-	sd_cmd_di  : out std_logic;
-	sd_clk  : out std_logic
-
-
   clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
 
   -- UART0 (FTDI USB slave serial)
@@ -186,6 +93,9 @@ port(
   -- i2c shared for digital video and RTC
   gpdi_scl, gpdi_sda: inout std_logic;
 
+  -- US2 port
+  usb_fpga_dp, usb_fpga_dn: inout std_logic;
+
   -- Flash ROM (SPI0)
   -- commented out because it can't be used as GPIO
   -- when bitstream is loaded from config flash
@@ -222,16 +132,18 @@ architecture struct of c64_ulx3s is
 	signal tv15Khz_mode   : std_logic;
 	signal ntsc_init_mode : std_logic;
 
-	alias sram_addr_int : unsigned is unsigned(sram_addr);
-	alias sram_dq_int   : unsigned is unsigned(sram_dq(7 downto 0));
+	alias ps2_clk : std_logic is usb_fpga_dp;
+	alias ps2_dat : std_logic is usb_fpga_dn;
+
+        signal mode_iec: std_logic := '0'; -- to DIP switch
 
 -- DE1/DE2 numbering
-	alias ext_iec_atn_i  : std_logic is gpio_1(32);
-	alias ext_iec_clk_o  : std_logic is gpio_1(33);
-	alias ext_iec_data_o : std_logic is gpio_1(34);
-	alias ext_iec_atn_o  : std_logic is gpio_1(35);
-	alias ext_iec_data_i : std_logic is gpio_1(2);
-	alias ext_iec_clk_i  : std_logic is gpio_1(0);
+	alias ext_iec_atn_i  : std_logic is gp(22);
+	alias ext_iec_clk_o  : std_logic is gp(23);
+	alias ext_iec_data_o : std_logic is gp(24);
+	alias ext_iec_atn_o  : std_logic is gp(25);
+	alias ext_iec_data_i : std_logic is gp(2);
+	alias ext_iec_clk_i  : std_logic is gp(0);
 
 -- DE0 nano numbering
 --	alias iec_atn_i  : std_logic is gpio_0(30);
@@ -241,12 +153,17 @@ architecture struct of c64_ulx3s is
 --	alias iec_data_i : std_logic is gpio_0_in(1);
 --	alias iec_clk_i  : std_logic is gpio_0_in(0);
 
+	signal clk50 : std_logic;
 	signal clk32 : std_logic;
 	signal clk18 : std_logic;
+	alias clk_pixel: std_logic is clk32;
+	signal clk_pixel_shift, clkn_pixel_shift : std_logic;
 
 	signal ram_addr : std_logic_vector(15 downto 0);
+	signal uram_addr: unsigned(15 downto 0); -- TODO
 	signal ram_dq, ram_in, ram_out : std_logic_vector(7 downto 0); -- dq is bidirectional
-	signal ram_ce : std_logic;
+	signal uram_dq: unsigned(7 downto 0); -- TODO
+	signal ram_cen : std_logic;
 	signal ram_we, ram_wen : std_logic;
 	
 	signal r : unsigned(7 downto 0);
@@ -255,6 +172,13 @@ architecture struct of c64_ulx3s is
 	signal hsync : std_logic;
 	signal vsync : std_logic;
 	signal csync : std_logic;
+	signal vga_hs, vga_vs : std_logic;
+	signal S_vga_r, S_vga_g, S_vga_b: std_logic_vector(1 downto 0);
+	signal S_vga_vsync, S_vga_hsync: std_logic;
+	signal S_vga_vblank, S_vga_blank: std_logic;
+	signal ddr_d: std_logic_vector(2 downto 0);
+	signal ddr_clk: std_logic;
+	signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
 
 	signal audio_data : std_logic_vector(17 downto 0);
 	signal sound_string : std_logic_vector(31 downto 0 );
@@ -271,22 +195,37 @@ architecture struct of c64_ulx3s is
 	signal reset_counter    : std_logic_vector(7 downto 0);
 	signal reset_n          : std_logic;
 	
+        signal disk_hi_num: std_logic_vector(1 downto 0) := "00"; -- to DIP switch
 	signal disk_num         : std_logic_vector(7 downto 0);
+	signal disk_num_full    : std_logic_vector(9 downto 0);
 	signal dbg_num          : std_logic_vector(2 downto 0);
 	signal led_disk         : std_logic_vector(7 downto 0);
 
+	signal irq_n: std_logic := '1';
+	signal nmi_n: std_logic := '1';
+
 begin
-	wifi_gpio0 <= '0'; -- setting to 1 will activate ESP32 loader
+	wifi_gpio0 <= '1'; -- setting to 0 will activate ESP32 loader
 
-	tv15Khz_mode <= sw(0);
-	ntsc_init_mode <= sw(1);
+	tv15Khz_mode <= '0'; -- sw(0);
+	ntsc_init_mode <= '1'; -- sw(1);
 
-	clk_32_18 : entity work.pll50_to_32_and_18
-	port map(
-		inclk0 => clock_50,
-		c0 => clk32,
-		c1 => clk18
-	);
+    clkgen_50: entity work.clk_25M_50M
+    port map
+    (
+      clki => clk_25MHz,         --  25 MHz input from board
+      clkop => clk50             --  50 MHz
+    );
+
+    clkgen_158_31_18: entity work.clk_25M_158M33_31M66_17M99
+    port map
+    (
+      clki => clk_25MHz,         --  25 MHz input from board
+      clkop => clk_pixel_shift,  -- 158.33 MHz
+      clkos => clkn_pixel_shift, -- 158.33 MHz inverted
+      clkos2 => clk32,           --  31.66 MHz
+      clkos3 => clk18            --  17.99 MHz
+    );
 	
 	process(clk32, btn(0))
 	begin
@@ -311,21 +250,22 @@ begin
 		reset_n => reset_n,
 		kbd_clk => ps2_clk,
 		kbd_dat => ps2_dat,
-		ramAddr => ram_addr,
-		ramData => ram_dq,
+		ramAddr => uram_addr,
+		ramData => uram_dq,
 		ramCE => ram_cen,
 		ramWe => ram_wen,
 		tv15Khz_mode => tv15Khz_mode,
 		ntscInitMode => ntsc_init_mode,
 		hsync => hsync,
 		vsync => vsync,
+		blank => S_vga_blank,
 		r => r,
 		g => g,
 		b => b,
 		game => '1',
 		exrom => '1',
-		irq_n => '1',
-		nmi_n => '1',
+		irq_n => irq_n,
+		nmi_n => nmi_n,
 		dma_n => '1',
 		ba => open,
 		dot_clk => open,
@@ -346,6 +286,10 @@ begin
 		disk_num => disk_num,
 		dbg_num => dbg_num
 	);
+	
+	ram_addr <= std_logic_vector(uram_addr);
+	ram_dq <= std_logic_vector(uram_dq);
+	uram_dq <= unsigned(ram_dq);
 
 	-- 
 	c64_iec_atn_i  <= not ((not c64_iec_atn_o)  and (not c1541_iec_atn_o) ) or (ext_iec_atn_i  and mode_iec);
@@ -360,6 +304,8 @@ begin
 	ext_iec_data_o <= c64_iec_data_o  or c1541_iec_data_o;
 	ext_iec_clk_o  <= c64_iec_clk_o   or c1541_iec_clk_o;
 	
+	disk_num_full <= (disk_hi_num & disk_num);
+
 	c1541_sd : entity work.c1541_sd
 	port map
 	(
@@ -367,7 +313,7 @@ begin
 	clk18 => clk18,
 	reset => not reset_n,
 	
-	disk_num => ("00" & disk_num),
+	disk_num => disk_num_full,
 
 	iec_atn_i  => c1541_iec_atn_i,
 	iec_data_i => c1541_iec_data_i,
@@ -402,8 +348,8 @@ begin
 	--sram_lb_n <= '0';
 	
 	ram_we <= '1' when ram_cen='0' and ram_wen='0' else '0';
-	ram_dq <= ram_out when ram_cen='0' and ram_wen='1' else 'Z';
-	ram64K : entity work.bram_true2p_1clk
+	ram_dq <= ram_out when ram_cen='0' and ram_wen='1' else (others => 'Z');
+	I_ram64K: entity work.bram_true2p_1clk
 	generic map(
 	  dual_port => false,
 	  data_width => 8,
@@ -411,7 +357,7 @@ begin
 	)
 	port map(
 	  clk => clk32,
-	  addr_a => ram_addr
+	  addr_a => ram_addr,
 	  we_a => ram_we,
 	  data_in_a => ram_dq,
 	  data_out_a => ram_out
@@ -483,5 +429,55 @@ begin
 	--port map(di=>std_logic_vector(dbg_read_sector(3 downto 0)), do=>hex6);
 	--h7 : entity work.decodeur_7_segments
 	--port map(di=>std_logic_vector("000" & dbg_read_sector(4 downto 4)), do=>hex7);
+
+  vga2dvi_converter: entity work.vga2dvid
+  generic map
+  (
+      C_ddr     => true,
+      C_depth   => 8 -- 8bpp (8 bit per pixel)
+  )
+  port map
+  (
+      clk_pixel => clk_pixel, -- 32 MHz
+      clk_shift => clk_pixel_shift, -- 5*32 MHz
+
+      in_red   => std_logic_vector(r),
+      in_green => std_logic_vector(g),
+      in_blue  => std_logic_vector(b),
+
+      in_hsync => vga_hs,
+      in_vsync => vga_vs,
+      in_blank => S_vga_blank,
+
+      -- single-ended output ready for differential buffers
+      out_red   => dvid_red,
+      out_green => dvid_green,
+      out_blue  => dvid_blue,
+      out_clock => dvid_clock
+  );
+
+  -- this module instantiates vendor specific modules ddr_out to
+  -- convert SDR 2-bit input to DDR clocked 1-bit output (single-ended)
+  G_vgatext_ddrout: entity work.ddr_dvid_out_se
+  port map
+  (
+    clk       => clk_pixel_shift,
+    clk_n     => clkn_pixel_shift,
+    in_red    => dvid_red,
+    in_green  => dvid_green,
+    in_blue   => dvid_blue,
+    in_clock  => dvid_clock,
+    out_red   => ddr_d(2),
+    out_green => ddr_d(1),
+    out_blue  => ddr_d(0),
+    out_clock => ddr_clk
+  );
+
+  gpdi_data_channels: for i in 0 to 2 generate
+    gpdi_diff_data: OLVDS
+    port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
+  end generate;
+  gpdi_diff_clock: OLVDS
+  port map(A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn);
 
 end struct;

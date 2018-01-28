@@ -15,6 +15,9 @@
         <Source name="clocks/clk_25M_158M33_31M66_17M99.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="clocks/clk_25M_166M66_33M33_18M01.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../rtl_emard/fpga64_buslogic_sid_iec.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -33,9 +36,6 @@
         <Source name="../../../rtl_emard/c1541_logic.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_dar/video_vicII_656x_a.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../rtl_dar/fpga64_buslogic_roms_mmu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -48,7 +48,7 @@
         <Source name="../../../rtl_pace/m6522.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../rtl_pace/sid_voice.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../rtl_emard/sid_voice.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../rtl_pace/sprom.vhd" type="VHDL" type_short="VHDL">
@@ -79,6 +79,9 @@
             <Options/>
         </Source>
         <Source name="../../../FPGA64_027/sources/rtl/video_vicII_656x_e.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../FPGA64_027/sources/rtl/video_vicII_656x_a.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../FPGA64_027/sources/rtl/io_ps2_keyboard.vhd" type="VHDL" type_short="VHDL">

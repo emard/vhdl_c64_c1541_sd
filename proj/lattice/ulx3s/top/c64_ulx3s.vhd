@@ -2,16 +2,12 @@
 -- ULX3S Top level for FPGA64_027 by Dar (darfpga@aol.fr)
 -- http://github.com/emard
 --
--- FPGA64 is Copyrighted 2005-2008 by Peter Wendrich (pwsoft@syntiac.com)
--- http://www.syntiac.com/fpga64.html
---
 -- Main features
 --  15KHz(TV) / 31Khz(VGA) : board switch(0)
 --  PAL(50Hz) / NTSC(60Hz) : board switch(1) and F12 key
 --  PS2 keyboard input with portA / portB joystick emulation : F11 key
---  wm8731 sound output
 --  64Ko of board SRAM used
---  External IEC bus available at gpio_1 (for drive 1541 or IEC/SD ...)
+--  External IEC bus available at gpio (for drive 1541 or IEC/SD ...)
 --   activated by switch(5) (activated with no hardware will stuck IEC bus)
 --
 --  Internal emulated 1541 on raw SD card : D64 images start at 256KB boundaries
@@ -132,26 +128,19 @@ architecture struct of c64_ulx3s is
 	signal tv15Khz_mode   : std_logic;
 	signal ntsc_init_mode : std_logic;
 
-	alias ps2_clk : std_logic is usb_fpga_dp;
-	alias ps2_dat : std_logic is usb_fpga_dn;
+	--alias ps2_clk : std_logic is usb_fpga_dp;
+	--alias ps2_dat : std_logic is usb_fpga_dn;
+	signal ps2_clk : std_logic := '1';
+	signal ps2_dat : std_logic := '1';
 
-        signal mode_iec: std_logic := '0'; -- to DIP switch
-
--- DE1/DE2 numbering
+        signal mode_iec: std_logic := '0'; -- to DIP switch activate external IEC
+        -- external IEC connection
 	alias ext_iec_atn_i  : std_logic is gp(22);
 	alias ext_iec_clk_o  : std_logic is gp(23);
 	alias ext_iec_data_o : std_logic is gp(24);
 	alias ext_iec_atn_o  : std_logic is gp(25);
 	alias ext_iec_data_i : std_logic is gp(2);
 	alias ext_iec_clk_i  : std_logic is gp(0);
-
--- DE0 nano numbering
---	alias iec_atn_i  : std_logic is gpio_0(30);
---	alias iec_clk_o  : std_logic is gpio_0(31);
---	alias iec_data_o : std_logic is gpio_0(32);
---	alias iec_atn_o  : std_logic is gpio_0(33);
---	alias iec_data_i : std_logic is gpio_0_in(1);
---	alias iec_clk_i  : std_logic is gpio_0_in(0);
 
 	signal clk50 : std_logic;
 	signal clk32 : std_logic;
@@ -181,7 +170,8 @@ architecture struct of c64_ulx3s is
 	signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
 
 	signal audio_data : std_logic_vector(17 downto 0);
-	signal sound_string : std_logic_vector(31 downto 0 );
+	signal S_audio: std_logic_vector(23 downto 0) := (others => '0');
+	signal S_spdif_out: std_logic;
 
 	signal dbg_adr_fetch    : std_logic_vector(15 downto 0);
 	signal dbg_cpu_irq      : std_logic;
@@ -208,7 +198,7 @@ begin
 	wifi_gpio0 <= '1'; -- setting to 0 will activate ESP32 loader
 
 	tv15Khz_mode <= '0'; -- sw(0);
-	ntsc_init_mode <= '1'; -- sw(1);
+	ntsc_init_mode <= '0'; -- sw(1);
 
     clkgen_50: entity work.clk_25M_250M_50M
     port map
@@ -219,6 +209,7 @@ begin
       clkos2 => clk50            --  50 MHz
     );
 
+    G_clk_31M66: if false generate
     clkgen_158_31_18: entity work.clk_25M_158M33_31M66_17M99
     port map
     (
@@ -228,6 +219,19 @@ begin
       clkos2 => clk32,           --  31.66 MHz
       clkos3 => clk18            --  17.99 MHz
     );
+    end generate;
+
+    G_clk_33M33: if true generate
+    clkgen_166_33_18: entity work.clk_25M_166M66_33M33_18M01
+    port map
+    (
+      clki => clk_25MHz,         --  25 MHz input from board
+      clkop => clk_pixel_shift,  -- 166.66 MHz
+      clkos => clkn_pixel_shift, -- 166.66 MHz inverted
+      clkos2 => clk32,           --  33.33 MHz
+      clkos3 => clk18            --  18.01 MHz
+    );
+    end generate;
 	
 	process(clk32, btn(0))
 	begin
@@ -378,12 +382,29 @@ begin
 		csync => csync
 	);
 
--- synchro composite/ synchro horizontale
+	-- synchro composite / synchro horizontale
 	vga_hs <= csync when tv15Khz_mode = '1' else hsync;
--- commutation rapide / synchro verticale
+	-- commutation rapide / synchro verticale
 	vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
 
-	sound_string <= audio_data(17 downto 2) & audio_data(17 downto 2);
+	S_audio(23 downto 6) <= audio_data(17 downto 0);
+	I_sound: if true generate
+	G_spdif_out: entity work.spdif_tx
+	generic map
+	(
+		C_clk_freq => 33333333,  -- Hz
+		C_sample_freq => 48000   -- Hz
+	)
+	port map
+	(
+		clk => clk32,
+    		data_in => S_audio,
+    		spdif_out => S_spdif_out
+    	);
+	audio_l(3 downto 0) <= S_audio(23 downto 20);
+	audio_r(3 downto 0) <= S_audio(23 downto 20);
+	audio_v(1 downto 0) <= (others => S_spdif_out);
+	end generate;
 
 	--with dbg_num select
 	--led(7 downto 0) <= disk_num when "000",
@@ -438,8 +459,8 @@ begin
   )
   port map
   (
-      clk_pixel => clk_pixel, -- 50 MHz
-      clk_shift => clk_pixel_shift, -- 5*50 MHz
+      clk_pixel => clk_pixel, -- 33.33 MHz
+      clk_shift => clk_pixel_shift, -- 5*33.33 MHz
 
       in_red   => std_logic_vector(r),
       in_green => std_logic_vector(g),

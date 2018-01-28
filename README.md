@@ -7,3 +7,6 @@ but no picture. Hsync, Vsync and blank are connected to onboard
 LEDs and they look like OK, but the timing may be probably out
 of VGA spec.
 
+Sometimes, on top appear 4 commodore screens with proper
+blueish color of border and background, but no prompt.
+

@@ -36,6 +36,9 @@
         <Source name="../../../rtl_emard/c1541_logic.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../roms/1541_c000_01_and_e000_06aa.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../rtl_dar/fpga64_buslogic_roms_mmu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

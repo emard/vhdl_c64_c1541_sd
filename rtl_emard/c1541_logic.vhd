@@ -291,6 +291,15 @@ begin
 --    );
 --  end generate;
 
+  -- to convert 1541 rom hex to vhd, run tools/convert_1541_roms.sh
+  rom_inst : entity work.rom_c1541
+    port map
+    (
+      clk       => clk_32M,
+      addr      => cpu_a(13 downto 0),
+      data      => rom_do
+    );
+
   ram_inst : entity work.bram_true2p_1clk
     generic map(
       dual_port => false,

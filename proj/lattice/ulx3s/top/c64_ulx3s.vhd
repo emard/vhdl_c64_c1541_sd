@@ -156,13 +156,12 @@ architecture struct of c64_ulx3s is
 	signal clk50 : std_logic;
 	signal clk32 : std_logic;
 	signal clk18 : std_logic;
-	alias clk_pixel: std_logic is clk32;
+	alias clk_pixel: std_logic is clk50;
 	signal clk_pixel_shift, clkn_pixel_shift : std_logic;
 
-	signal ram_addr : std_logic_vector(15 downto 0);
-	signal uram_addr: unsigned(15 downto 0); -- TODO
-	signal ram_dq, ram_in, ram_out : std_logic_vector(7 downto 0); -- dq is bidirectional
-	signal uram_dq: unsigned(7 downto 0); -- TODO
+	signal uram_addr: unsigned(15 downto 0);
+	signal uram_dq: unsigned(7 downto 0);
+	signal ram_in, ram_out : std_logic_vector(7 downto 0); -- dq is bidirectional
 	signal ram_cen : std_logic;
 	signal ram_we, ram_wen : std_logic;
 	
@@ -210,19 +209,21 @@ begin
 	tv15Khz_mode <= '0'; -- sw(0);
 	ntsc_init_mode <= '1'; -- sw(1);
 
-    clkgen_50: entity work.clk_25M_50M
+    clkgen_50: entity work.clk_25M_250M_50M
     port map
     (
       clki => clk_25MHz,         --  25 MHz input from board
-      clkop => clk50             --  50 MHz
+      clkop => clk_pixel_shift,  -- 250 MHz
+      clkos => clkn_pixel_shift, -- 250 MHz inverted
+      clkos2 => clk50            --  50 MHz
     );
 
     clkgen_158_31_18: entity work.clk_25M_158M33_31M66_17M99
     port map
     (
       clki => clk_25MHz,         --  25 MHz input from board
-      clkop => clk_pixel_shift,  -- 158.33 MHz
-      clkos => clkn_pixel_shift, -- 158.33 MHz inverted
+      clkop => open,             -- 158.33 MHz
+      clkos => open,             -- 158.33 MHz inverted
       clkos2 => clk32,           --  31.66 MHz
       clkos3 => clk18            --  17.99 MHz
     );
@@ -287,9 +288,6 @@ begin
 		dbg_num => dbg_num
 	);
 	
-	ram_addr <= std_logic_vector(uram_addr);
-	ram_dq <= std_logic_vector(uram_dq);
-	uram_dq <= unsigned(ram_dq);
 
 	-- 
 	c64_iec_atn_i  <= not ((not c64_iec_atn_o)  and (not c1541_iec_atn_o) ) or (ext_iec_atn_i  and mode_iec);
@@ -348,7 +346,7 @@ begin
 	--sram_lb_n <= '0';
 	
 	ram_we <= '1' when ram_cen='0' and ram_wen='0' else '0';
-	ram_dq <= ram_out when ram_cen='0' and ram_wen='1' else (others => 'Z');
+	uram_dq <= unsigned(ram_out) when ram_cen='0' and ram_wen='1' else (others => 'Z');
 	I_ram64K: entity work.bram_true2p_1clk
 	generic map(
 	  dual_port => false,
@@ -357,9 +355,9 @@ begin
 	)
 	port map(
 	  clk => clk32,
-	  addr_a => ram_addr,
+	  addr_a => std_logic_vector(uram_addr),
 	  we_a => ram_we,
-	  data_in_a => ram_dq,
+	  data_in_a => std_logic_vector(uram_dq),
 	  data_out_a => ram_out
 	); 
 
@@ -386,14 +384,15 @@ begin
 
 	sound_string <= audio_data(17 downto 2) & audio_data(17 downto 2);
 
-	with dbg_num select
-	led(7 downto 0) <= disk_num when "000",
-					led_disk when "001",
-					"00"&dbg_track_dbl(6 downto 1) when "010",
-					"000"&dbg_read_sector when "011",
-					dbg_sd_state when "100",
-					X"AA" when others;
-				 
+	--with dbg_num select
+	--led(7 downto 0) <= disk_num when "000",
+	--				led_disk when "001",
+	--				"00"&dbg_track_dbl(6 downto 1) when "010",
+	--				"000"&dbg_read_sector when "011",
+	--				dbg_sd_state when "100",
+	--				X"AA" when others;
+
+	led(7 downto 0) <= std_logic_vector(b(7 downto 3)) & (not vga_hs) & (not vga_vs) & S_vga_blank;
 
 	-- debug de2	
 	--gpio_0(15 downto 0) <= dbg_adr_fetch(15 downto 0);
@@ -438,8 +437,8 @@ begin
   )
   port map
   (
-      clk_pixel => clk_pixel, -- 32 MHz
-      clk_shift => clk_pixel_shift, -- 5*32 MHz
+      clk_pixel => clk_pixel, -- 50 MHz
+      clk_shift => clk_pixel_shift, -- 5*50 MHz
 
       in_red   => std_logic_vector(r),
       in_green => std_logic_vector(g),

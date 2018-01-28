@@ -1,4 +1,4 @@
-# VHDL C64
+# vhdl_c64_c1541_sd
 
 Attempt to adapt DarFPGA's C64 FPGA for HDMI on ULX3S board.
 Currently it doesn't work (no sync on HDMI monitor).

@@ -156,7 +156,8 @@ architecture struct of c64_ulx3s is
 	signal clk50 : std_logic;
 	signal clk32 : std_logic;
 	signal clk18 : std_logic;
-	alias clk_pixel: std_logic is clk50;
+	-- alias clk_pixel: std_logic is clk50;
+	alias clk_pixel: std_logic is clk32;
 	signal clk_pixel_shift, clkn_pixel_shift : std_logic;
 
 	signal uram_addr: unsigned(15 downto 0);
@@ -213,8 +214,8 @@ begin
     port map
     (
       clki => clk_25MHz,         --  25 MHz input from board
-      clkop => clk_pixel_shift,  -- 250 MHz
-      clkos => clkn_pixel_shift, -- 250 MHz inverted
+      clkop => open,             -- 250 MHz
+      clkos => open,             -- 250 MHz inverted
       clkos2 => clk50            --  50 MHz
     );
 
@@ -222,8 +223,8 @@ begin
     port map
     (
       clki => clk_25MHz,         --  25 MHz input from board
-      clkop => open,             -- 158.33 MHz
-      clkos => open,             -- 158.33 MHz inverted
+      clkop => clk_pixel_shift,  -- 158.33 MHz
+      clkos => clkn_pixel_shift, -- 158.33 MHz inverted
       clkos2 => clk32,           --  31.66 MHz
       clkos3 => clk18            --  17.99 MHz
     );

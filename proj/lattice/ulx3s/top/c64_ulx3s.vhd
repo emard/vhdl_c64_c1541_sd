@@ -30,7 +30,13 @@ library ecp5u;
 use ecp5u.components.all;
 
 entity c64_ulx3s is
-port(
+generic
+(
+  C_floppy: boolean := false; -- enable c1541 floopy using SD card
+  C_sound: boolean := false -- enable SID 6581 sound chip
+);
+port
+(
   clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
 
   -- UART0 (FTDI USB slave serial)
@@ -124,28 +130,24 @@ architecture struct of c64_ulx3s is
 	signal c1541_iec_data_i : std_logic;
 	signal c1541_iec_clk_i  : std_logic;
 
-	--alias tv15Khz_mode : std_logic is sw(0);
 	signal tv15Khz_mode   : std_logic;
 	signal ntsc_init_mode : std_logic;
 
-	--alias ps2_clk : std_logic is usb_fpga_dp;
-	--alias ps2_dat : std_logic is usb_fpga_dn;
-	signal ps2_clk : std_logic := '1';
-	signal ps2_dat : std_logic := '1';
+	alias ps2_clk : std_logic is usb_fpga_dp;
+	alias ps2_dat : std_logic is usb_fpga_dn;
 
         signal mode_iec: std_logic := '0'; -- to DIP switch activate external IEC
         -- external IEC connection
-	alias ext_iec_atn_i  : std_logic is gp(22);
-	alias ext_iec_clk_o  : std_logic is gp(23);
-	alias ext_iec_data_o : std_logic is gp(24);
-	alias ext_iec_atn_o  : std_logic is gp(25);
-	alias ext_iec_data_i : std_logic is gp(2);
+	alias ext_iec_atn_i  : std_logic is gp(5);
+	alias ext_iec_clk_o  : std_logic is gp(4);
+	alias ext_iec_data_o : std_logic is gp(3);
+	alias ext_iec_atn_o  : std_logic is gp(2);
+	alias ext_iec_data_i : std_logic is gp(1);
 	alias ext_iec_clk_i  : std_logic is gp(0);
 
 	signal clk50 : std_logic;
 	signal clk32 : std_logic;
 	signal clk18 : std_logic;
-	-- alias clk_pixel: std_logic is clk50;
 	alias clk_pixel: std_logic is clk32;
 	signal clk_pixel_shift, clkn_pixel_shift : std_logic;
 
@@ -233,6 +235,7 @@ begin
     );
     end generate;
 	
+	-- RESET --
 	process(clk32, btn(0))
 	begin
 		if rising_edge(clk32) then
@@ -251,7 +254,7 @@ begin
 
 	fpga64 : entity work.fpga64_sid_iec
 	port map(
-		sysclk => clk50,
+		sysclk => clk50, -- used only for cartridge
 		clk32 => clk32,
 		reset_n => reset_n,
 		kbd_clk => ps2_clk,
@@ -270,8 +273,8 @@ begin
 		b => b,
 		game => '1',
 		exrom => '1',
-		irq_n => irq_n,
-		nmi_n => nmi_n,
+		irq_n => gp(10), -- normally pulled up
+		nmi_n => gp(11), -- normally pulled up
 		dma_n => '1',
 		ba => open,
 		dot_clk => open,
@@ -292,9 +295,9 @@ begin
 		disk_num => disk_num,
 		dbg_num => dbg_num
 	);
-	
 
-	-- 
+	-- FLOPPY --
+	G_floppy: if C_floppy generate
 	c64_iec_atn_i  <= not ((not c64_iec_atn_o)  and (not c1541_iec_atn_o) ) or (ext_iec_atn_i  and mode_iec);
   	c64_iec_data_i <= not ((not c64_iec_data_o) and (not c1541_iec_data_o)) or (ext_iec_data_i and mode_iec);
 	c64_iec_clk_i  <= not ((not c64_iec_clk_o)  and (not c1541_iec_clk_o) ) or (ext_iec_clk_i  and mode_iec);
@@ -342,53 +345,11 @@ begin
 	
   	led => led_disk
 	);
+	end generate;
 	
-	--sram addr(17 downto 16) <= (others => '0');
-	--sram_ce_n <= ram_ce;
-	--sram_we_n <= ram_we;
-	--sram_oe_n <= not ram_we;
-	--sram_ub_n <= '0';
-	--sram_lb_n <= '0';
-	
-	ram_we <= '1' when ram_cen='0' and ram_wen='0' else '0';
-	uram_dq <= unsigned(ram_out) when ram_cen='0' and ram_wen='1' else (others => 'Z');
-	I_ram64K: entity work.bram_true2p_1clk
-	generic map(
-	  dual_port => false,
-	  data_width => 8,
-	  addr_width => 16
-	)
-	port map(
-	  clk => clk32,
-	  addr_a => std_logic_vector(uram_addr),
-	  we_a => ram_we,
-	  data_in_a => std_logic_vector(uram_dq),
-	  data_out_a => ram_out
-	); 
-
-	--vga_clk <= clk32;
-	--vga_sync <=  '0';
-	--vga_blank <= '1';
-
-	--vga_r <= std_logic_vector(r(7 downto 0)) & "00";
-	--vga_g <= std_logic_vector(g(7 downto 0)) & "00";
-	--vga_b <= std_logic_vector(b(7 downto 0)) & "00";
-
-	comp_sync : entity work.composite_sync
-	port map(
-		clk32 => clk32,
-		hsync => hsync,
-		vsync => vsync,
-		csync => csync
-	);
-
-	-- synchro composite / synchro horizontale
-	vga_hs <= csync when tv15Khz_mode = '1' else hsync;
-	-- commutation rapide / synchro verticale
-	vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
-
+	-- SOUND --
+	I_sound: if C_sound generate
 	S_audio(23 downto 6) <= audio_data(17 downto 0);
-	I_sound: if true generate
 	G_spdif_out: entity work.spdif_tx
 	generic map
 	(
@@ -406,50 +367,37 @@ begin
 	audio_v(1 downto 0) <= (others => S_spdif_out);
 	end generate;
 
-	--with dbg_num select
-	--led(7 downto 0) <= disk_num when "000",
-	--				led_disk when "001",
-	--				"00"&dbg_track_dbl(6 downto 1) when "010",
-	--				"000"&dbg_read_sector when "011",
-	--				dbg_sd_state when "100",
-	--				X"AA" when others;
+        -- RAM --
+	ram_we <= '1' when ram_cen='0' and ram_wen='0' else '0';
+	uram_dq <= unsigned(ram_out) when ram_cen='0' and ram_wen='1' else (others => 'Z');
+	I_ram64K: entity work.bram_true2p_1clk
+	generic map(
+	  dual_port => false,
+	  pass_thru_a => false,
+	  data_width => 8,
+	  addr_width => 16
+	)
+	port map(
+	  clk => clk32,
+	  addr_a => std_logic_vector(uram_addr),
+	  we_a => ram_we,
+	  data_in_a => std_logic_vector(uram_dq),
+	  data_out_a => ram_out
+	); 
+	
+	-- VIDEO --
+	comp_sync : entity work.composite_sync
+	port map(
+		clk32 => clk32,
+		hsync => hsync,
+		vsync => vsync,
+		csync => csync
+	);
 
-	led(7 downto 0) <= std_logic_vector(b(7 downto 3)) & (not vga_hs) & (not vga_vs) & S_vga_blank;
-
-	-- debug de2	
-	--gpio_0(15 downto 0) <= dbg_adr_fetch(15 downto 0);
-	--gpio_0(16) <= dbg_sync_n;
-	--gpio_0(17) <= dbg_byte_n;
-	--gpio_0(18) <= not c1541_iec_atn_i;
-	--gpio_0(19) <= not c1541_iec_data_i;
-	--gpio_0(20) <= not c1541_iec_clk_i;
-	--gpio_0(21) <= not c1541_iec_data_o;
-	--gpio_0(22) <= not c1541_iec_clk_o;
-	--gpio_0(23) <= dbg_sd_busy;
-	--gpio_0(24) <= dbg_cpu_irq;
-	--gpio_0(32 downto 25) <= dbg_sd_state;
-	--gpio_0(29 downto 25) <= dbg_read_sector;
-
-
-	--h0 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_adr_fetch(3 downto 0)), do=>hex0);
-	--h1 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_adr_fetch(7 downto 4)), do=>hex1);
-
-	--h2 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_adr_fetch(11 downto 8)), do=>hex2);
-	--h3 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_adr_fetch(15 downto 12)), do=>hex3);
-
-	--h4 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_track_dbl(4 downto 1)), do=>hex4);
-	--h5 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector("00" & dbg_track_dbl(6 downto 5)), do=>hex5);
-
-	--h6 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector(dbg_read_sector(3 downto 0)), do=>hex6);
-	--h7 : entity work.decodeur_7_segments
-	--port map(di=>std_logic_vector("000" & dbg_read_sector(4 downto 4)), do=>hex7);
+	-- synchro composite / synchro horizontale
+	vga_hs <= csync when tv15Khz_mode = '1' else hsync;
+	-- commutation rapide / synchro verticale
+	vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
 
   vga2dvi_converter: entity work.vga2dvid
   generic map
@@ -500,5 +448,53 @@ begin
   end generate;
   gpdi_diff_clock: OLVDS
   port map(A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn);
+  
+  -- DEBUG --
+
+	--with dbg_num select
+	--led(7 downto 0) <= disk_num when "000",
+	--				led_disk when "001",
+	--				"00"&dbg_track_dbl(6 downto 1) when "010",
+	--				"000"&dbg_read_sector when "011",
+	--				dbg_sd_state when "100",
+	--				X"AA" when others;
+
+	-- led(7 downto 0) <= std_logic_vector(b(7 downto 3)) & (not vga_hs) & (not vga_vs) & S_vga_blank;
+	led(7 downto 0) <= std_logic_vector(b(7 downto 4)) & (not reset_n) & (not vga_hs) & (not vga_vs) & S_vga_blank;
+
+	-- debug de2	
+	--gpio_0(15 downto 0) <= dbg_adr_fetch(15 downto 0);
+	--gpio_0(16) <= dbg_sync_n;
+	--gpio_0(17) <= dbg_byte_n;
+	--gpio_0(18) <= not c1541_iec_atn_i;
+	--gpio_0(19) <= not c1541_iec_data_i;
+	--gpio_0(20) <= not c1541_iec_clk_i;
+	--gpio_0(21) <= not c1541_iec_data_o;
+	--gpio_0(22) <= not c1541_iec_clk_o;
+	--gpio_0(23) <= dbg_sd_busy;
+	--gpio_0(24) <= dbg_cpu_irq;
+	--gpio_0(32 downto 25) <= dbg_sd_state;
+	--gpio_0(29 downto 25) <= dbg_read_sector;
+
+
+	--h0 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_adr_fetch(3 downto 0)), do=>hex0);
+	--h1 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_adr_fetch(7 downto 4)), do=>hex1);
+
+	--h2 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_adr_fetch(11 downto 8)), do=>hex2);
+	--h3 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_adr_fetch(15 downto 12)), do=>hex3);
+
+	--h4 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_track_dbl(4 downto 1)), do=>hex4);
+	--h5 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector("00" & dbg_track_dbl(6 downto 5)), do=>hex5);
+
+	--h6 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector(dbg_read_sector(3 downto 0)), do=>hex6);
+	--h7 : entity work.decodeur_7_segments
+	--port map(di=>std_logic_vector("000" & dbg_read_sector(4 downto 4)), do=>hex7);
 
 end struct;

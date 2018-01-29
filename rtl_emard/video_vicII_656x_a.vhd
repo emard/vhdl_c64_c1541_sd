@@ -249,7 +249,7 @@ begin
 				rasterLines := 261; -- NTSC (R7 and earlier have 262 lines)
 			end if;
 			if mode6567R8 = '1' then
-				rasterLines := 397; -- NTSC (R8 and newer have 263 lines)
+				rasterLines := 255; -- NTSC (R8 and newer have 263 lines)
 			end if;
 			if rasterY = rasterLines then
 				lastLineFlag <= true;
@@ -653,7 +653,7 @@ rasterCounters: process(clk)
 			if phi = '0'
 			and enaData = '1'
 			and baSync = '0' then
-				if rasterX(9 downto 3) = 100 then -- emard trying to get HDMI 640x and sync 85Hz
+				if rasterX(9 downto 3) = 72 then -- emard trying to get HDMI 640x and sync 85Hz
 					rasterX(9 downto 3) <= (others => '0');
 				else
 					rasterX(9 downto 3) <= rasterX(9 downto 3) + 1;
@@ -753,7 +753,7 @@ doVBlanking: process(clk, mode6569, mode6567old, mode6567R8)
 	begin
 		rasterBlank := 300;
 		if (mode6567old or mode6567R8) = '1' then
-			rasterBlank := 12;
+			rasterBlank := 15;
 		end if;
 		if rising_edge(clk) then
 			vBlanking <= '0';
@@ -775,7 +775,7 @@ doHBlanking: process(clk)
 			if vicCycle = cycleRefresh1 then
 				hBlack <= '0';
 			end if;
-			if sprite = 3 then -- dar 5 then
+			if sprite = 5 then -- dar=3, default=5
 				hBlanking <= '1';
 			else
 				hBlanking <= '0';

@@ -203,7 +203,7 @@ begin
 	tv15Khz_mode <= '0'; -- sw(0);
 	ntsc_init_mode <= '1'; -- sw(1);
 
-    G_x1: if true generate
+    G_x1: if false generate
     clkgen_50: entity work.clk_25M_250M_50M
     port map
     (
@@ -231,7 +231,7 @@ begin
     end generate;
 
     -- 16:9 640x400 @ 85 Hz or 4:3 640x480 @ 640x480 @ 75 Hz
-    G_clk_31M66: if false generate
+    G_clk_31M66: if true generate
     clkgen_158_31_18: entity work.clk_25M_158M33_31M66_17M99
     port map
     (
@@ -393,7 +393,7 @@ begin
 	I_ram64K: entity work.bram_true2p_1clk
 	generic map(
 	  dual_port => false,
-	  pass_thru_a => false,
+	  pass_thru_a => true,
 	  data_width => 8,
 	  addr_width => 16
 	)

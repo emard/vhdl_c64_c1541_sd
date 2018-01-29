@@ -145,6 +145,7 @@ architecture struct of c64_ulx3s is
 	alias ext_iec_data_i : std_logic is gp(1);
 	alias ext_iec_clk_i  : std_logic is gp(0);
 
+	signal clk25 : std_logic;
 	signal clk50 : std_logic;
 	signal clk32 : std_logic;
 	signal clk18 : std_logic;
@@ -200,17 +201,36 @@ begin
 	wifi_gpio0 <= '1'; -- setting to 0 will activate ESP32 loader
 
 	tv15Khz_mode <= '0'; -- sw(0);
-	ntsc_init_mode <= '0'; -- sw(1);
+	ntsc_init_mode <= '1'; -- sw(1);
 
+    G_x1: if true generate
     clkgen_50: entity work.clk_25M_250M_50M
     port map
     (
       clki => clk_25MHz,         --  25 MHz input from board
-      clkop => open,             -- 250 MHz
-      clkos => open,             -- 250 MHz inverted
+      clkop => clk_pixel_shift,  -- 250 MHz
+      clkos => clkn_pixel_shift, -- 250 MHz inverted
       clkos2 => clk50            --  50 MHz
     );
+    clk32 <= clk50;
+    clk18 <= clk50;
+    end generate;
 
+    G_x2: if false generate
+    clkgen_50: entity work.clk_25_100_125_25
+    port map
+    (
+      clki => clk_25MHz,         --  25 MHz input from board
+      clkop => clk_pixel_shift,  -- 125 MHz
+      clkos => clkn_pixel_shift, -- 125 MHz inverted
+      clkos2 => clk25            --  50 MHz
+    );
+    clk32 <= clk25;
+    clk18 <= clk25;
+    clk50 <= clk25;
+    end generate;
+
+    -- 16:9 640x400 @ 85 Hz or 4:3 640x480 @ 640x480 @ 75 Hz
     G_clk_31M66: if false generate
     clkgen_158_31_18: entity work.clk_25M_158M33_31M66_17M99
     port map
@@ -223,7 +243,7 @@ begin
     );
     end generate;
 
-    G_clk_33M33: if true generate
+    G_clk_33M33: if false generate
     clkgen_166_33_18: entity work.clk_25M_166M66_33M33_18M01
     port map
     (

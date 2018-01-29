@@ -249,7 +249,7 @@ begin
 				rasterLines := 261; -- NTSC (R7 and earlier have 262 lines)
 			end if;
 			if mode6567R8 = '1' then
-				rasterLines := 525; -- NTSC (R8 and newer have 263 lines)
+				rasterLines := 397; -- NTSC (R8 and newer have 263 lines)
 			end if;
 			if rasterY = rasterLines then
 				lastLineFlag <= true;

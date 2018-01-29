@@ -10,3 +10,4 @@ of VGA spec.
 Sometimes, on top appear 4 commodore screens with proper
 blueish color of border and background, but no prompt.
 
+I give up.
